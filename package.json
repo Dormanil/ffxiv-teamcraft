@@ -54,6 +54,14 @@
     "squirrelWindows": {
       "iconUrl": "https://cdn.ffxivteamcraft.com/favicon.ico",
       "remoteReleases": "https://update.ffxivteamcraft.com/"
+    },
+    "linux": {
+      "target": "AppImage",
+      "executableName": "ffxiv-teamcraft",
+      "icon": "./tools/build/icon",
+      "synopsis": "Collaborative crafting made easy",
+      "description": "Makes crafting/gathering lists, simulates crafting macros, and helps you waste less resources in Final Fantasy XIV.",
+      "category": "Games"
     }
   },
   "scripts": {
@@ -100,6 +108,7 @@
     "electron:setup:build-dev:dir": "yarn electron:build && electron-builder -w --dir",
     "electron:setup:build-beta": "del-cli release/* && yarn electron:build && yarn build:electron-dev && electron-builder -w",
     "electron:setup:publish": "yarn build:electron-prod && yarn electron:build && electron-builder -w -p always",
+    "electron:setup:publish:linux": "yarn build:electron-prod && yarn electron:build && electron-builder -l",
     "postinstall": "ngcc && electron-builder install-app-deps",
     "release:full": "yarn build:prod && firebase deploy -P default --only hosting && yarn electron:setup:publish",
     "pack": "electron-builder --dir",
