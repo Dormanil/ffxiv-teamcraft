@@ -138,6 +138,6 @@ export class TeamcraftDesktopApp {
       });
     });
 
-    loaderWindow.loadURL(join(__dirname, 'loader.html'));
+    loaderWindow.loadURL(join('file://', __dirname, 'loader.html'));
   }
 }

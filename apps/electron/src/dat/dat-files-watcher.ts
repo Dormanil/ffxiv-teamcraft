@@ -1,5 +1,5 @@
 import * as log from 'electron-log';
-import { FSWatcher, readdirSync, readFile, readFileSync, statSync, watch } from 'fs';
+import { FSWatcher, readdirSync, readFile, readFileSync, statSync } from 'fs';
 import { join } from 'path';
 import { MainWindow } from '../window/main-window';
 import * as BufferReader from 'buffer-reader';
@@ -8,6 +8,8 @@ import { RetainerInventory } from './retainer-inventory';
 import { app, dialog, ipcMain, OpenDialogOptions } from 'electron';
 import { Store } from '../store';
 import * as hashFiles from 'hash-files';
+import { platform } from 'os';
+import { watch } from 'chokidar';
 
 class UnexpectedSizeError extends Error {
   constructor(expected, real) {
@@ -157,13 +159,23 @@ export class DatFilesWatcher {
     if (customDir) {
       return customDir;
     }
-    switch (region) {
-      case 'KR':
-        return `${app.getPath('documents')}\\My Games\\FINAL FANTASY XIV - KOREA`;
-      case 'CN':
-        return 'C:\\Program Files (x86)\\上海数龙科技有限公司\\最终幻想XIV\\game\\My Games\\FINAL FANTASY XIV - A Realm Reborn';
-      default:
-        return `${app.getPath('documents')}\\My Games\\FINAL FANTASY XIV - A Realm Reborn`;
+    if (platform() === 'win32') {
+      switch (region) {
+        case 'KR':
+          return `${app.getPath('documents')}\\My Games\\FINAL FANTASY XIV - KOREA`;
+        case 'CN':
+          return 'C:\\Program Files (x86)\\上海数龙科技有限公司\\最终幻想XIV\\game\\My Games\\FINAL FANTASY XIV - A Realm Reborn';
+        default:
+          return `${app.getPath('documents')}\\My Games\\FINAL FANTASY XIV - A Realm Reborn`;
+      }
+    }
+    else {
+      switch (region) {
+        case 'KR':
+          return `${app.getPath('documents')}/My Games/FINAL FANTASY XIV - KOREA`;
+        default:
+          return `${app.getPath('documents')}/My Games/FINAL FANTASY XIV - A Realm Reborn`;
+      }
     }
   }
 
@@ -201,9 +213,16 @@ export class DatFilesWatcher {
         return acc;
       }, {});
 
-      this.watcher = watch(watchDir, { recursive: true }, (event, filename) => {
-        this.onEvent(event, filename, watchDir);
+      this.watcher = watch(watchDir, {
+        depth: 3,
+        awaitWriteFinish: {
+          stabilityThreshold: 2000,
+          pollInterval: 100
+        }
       });
+      this.watcher.on('change', filename => {
+        this.onEvent('change', filename, watchDir)
+      })
       ipcMain.on('dat:all-odr', event => {
         event.sender.send('dat:all-odr:value', this.getAllItemODRs(watchDir));
       });
